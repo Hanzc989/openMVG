@@ -17,11 +17,6 @@
 namespace openMVG {
 namespace robust{
 
-namespace
-{
-  std::default_random_engine random_generator;
-}
-
 /**
 * Pick a random subset of the integers [0, total), in random order.
 * Note that this can behave badly if num_samples is close to total; runtime
@@ -30,22 +25,25 @@ namespace
 * This uses a quadratic rejection strategy and should only be used for small
 * num_samples.
 *
-* \param num_samples   The number of samples to produce.
-* \param total_samples The number of available samples.
-* \param samples       num_samples of numbers in [0, total_samples) is placed
-*                      here on return.
+* \param[in] num_samples      The number of samples to produce.
+* \param[in] total_samples    The number of available samples.
+* \param[in] random_generator The random number generator.
+* \param[out] samples         num_samples of numbers in [0, total_samples) is placed
+*                             here on return.
 */
+template <class RandomGeneratorT>
 inline void UniformSample
 (
   uint32_t num_samples,
   uint32_t total_samples,
+  RandomGeneratorT &&random_generator,
   std::vector<uint32_t> *samples
 )
 {
   std::uniform_int_distribution<unsigned int> distribution(0, total_samples-1);
   samples->resize(0);
   while (samples->size() < num_samples) {
-    const unsigned int sample = distribution(random_generator);
+    const auto sample = distribution(random_generator);
     bool bFound = false;
     for (size_t j = 0; j < samples->size() && !bFound; ++j) {
       bFound = (*samples)[j] == sample;
@@ -61,18 +59,20 @@ inline void UniformSample
 * Use a Fisher Yates sampling (shuffling) to avoid picking the same index many time.
 *
 *
-* \param num_samples The number of randomly picked value in the vec_index array.
-* \param vec_index An array of unique index value. The function shuffle this vector.
-* \param samples Output randomly picked value.
+* \param[in] num_samples The number of randomly picked value in the vec_index array.
+* \param[in] random_generator The random number generator.
+* \param[out] vec_index An array of unique index value. The function shuffle this vector.
+* \param[out] samples Output randomly picked value.
 * \return true if the sampling can be performed
 */
 //
-template<typename T>
+template<class RandomGeneratorT>
 inline bool UniformSample
 (
   const uint32_t num_samples,
-  std::vector<T> * vec_index, // the array that provide the index (will be shuffled)
-  std::vector<T> * samples // output found indices
+  RandomGeneratorT &&random_generator,
+  std::vector<uint32_t> * vec_index, // the array that provide the index (will be shuffled)
+  std::vector<uint32_t> * samples    // output found indices
 )
 {
   if (vec_index->size() < num_samples)
